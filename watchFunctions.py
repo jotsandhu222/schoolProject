@@ -150,7 +150,6 @@ def send_sms(phone_number, message):
 
 
 import smbus2
-import time
 
 class MAX30100Sensor:
     def __init__(self, bus=1, address=0x57):
