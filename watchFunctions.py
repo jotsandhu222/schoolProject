@@ -147,6 +147,35 @@ def send_sms(phone_number, message):
     #send_sms("+917717619230", "Hello from Raspberry Pi + SIM800L!")
 
     #working terminal commands for sim800minicom -b 9600 -D /dev/ttyAMA0
+
+
+import smbus2
+import time
+
+class MAX30100Sensor:
+    def __init__(self, bus=1, address=0x57):
+        self.bus = smbus2.SMBus(bus)
+        self.address = address
+        self.initialize_sensor()
+
+    def initialize_sensor(self):
+        try:
+            # Basic initialization — check your own init sequence
+            self.bus.write_byte_data(self.address, 0x06, 0x03)  # mode config (e.g., SpO2 mode)
+            self.bus.write_byte_data(self.address, 0x09, 0x27)  # SpO2 config
+            print("MAX30100 Initialized.")
+        except Exception as e:
+            print(f"MAX30100 init error: {e}")
+
+    def read_heartbeat(self):
+        try:
+            ir = self.bus.read_word_data(self.address, 0x05)
+            red = self.bus.read_word_data(self.address, 0x06)
+            return ir, red
+        except Exception as e:
+            print(f"I2C read error: {e}")
+            return None, None
+
 def send_sms_if_button_not_pressed(button_obj, heartbeat, gps_location):
     start_time = time.time()
     while time.time() - start_time < 5:
@@ -222,6 +251,11 @@ def demo_mode():
     location = get_location()
     emergency_number = "+917717619230"
     emergency = False
+
+    sensor = MAX30100Sensor()
+    ir, red = sensor.read_heartbeat()
+    print("IR:", ir, "RED:", red)
+
     
     while True:
         if heartbeat < 60 or heartbeat > 120:
